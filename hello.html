@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Генератор животных</title>
+    <script src="https://cdn.tailwindcss.com "></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        .ai-processing {
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-processing::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+            animation: shine 1.5s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .animal-card {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .animal-card:hover {
+            transform: translateY(-5px) rotateX(5deg);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-4">
+                AI Генератор животных
+            </h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Нажмите кнопку ниже, чтобы сгенерировать уникальное изображение животного с помощью искусственного интеллекта
+            </p>
+        </div>
+        <div class="flex flex-col items-center">
+            <!-- Animal Display Card -->
+            <div class="w-full max-w-2xl mb-8 relative">
+                <div id="animalContainer" class="bg-white rounded-xl shadow-xl overflow-hidden animal-card">
+                    <div id="loadingState" class="p-12 text-center">
+                        <div class="flex justify-center mb-4">
+                            <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center pulse-animation">
+                                <i class="fas fa-paw text-white text-2xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Ожидание генерации</h3>
+                        <p class="text-gray-500">Нажмите "Начать", чтобы создать изображение животного</p>
+                    </div>
+                    <div id="animalImageContainer" class="hidden">
+                        <div class="relative">
+                            <img id="animalImage" src="" alt="Сгенерированное животное" class="w-full h-auto max-h-96 object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                <h3 id="animalName" class="text-white text-xl font-bold"></h3>
+                                <p id="animalDescription" class="text-white/80 text-sm"></p>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-gray-50">
+                            <div class="flex justify-between items-center">
+                                <div class="flex space-x-2">
+                                    <span id="aiTag" class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full flex items-center">
+                                        <i class="fas fa-robot mr-1"></i> AI Generated
+                                    </span>
+                                    <span id="animalType" class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"></span>
+                                </div>
+                                <button id="downloadBtn" class="text-blue-600 hover:text-blue-800 transition">
+                                    <i class="fas fa-download"></i> Скачать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Controls -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                <button id="generateBtn" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all transform hover:scale-105 flex items-center justify-center">
+                    <i class="fas fa-play mr-2"></i> Начать генерацию
+                </button>
+                <button id="surpriseBtn" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all transform hover:scale-105 flex items-center justify-center">
+                    <i class="fas fa-random mr-2"></i> Сюрприз
+                </button>
+            </div>
+            <!-- Options -->
+            <div class="w-full max-w-2xl bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Настройки генерации</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Тип животного</label>
+                        <select id="animalCategory" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="random">Случайный</option>
+                            <option value="mammal">Млекопитающие</option>
+                            <option value="bird">Птицы</option>
+                            <option value="reptile">Рептилии</option>
+                            <option value="aquatic">Водные</option>
+                            <option value="insect">Насекомые</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Стиль изображения</label>
+                        <select id="artStyle" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="realistic">Реалистичный</option>
+                            <option value="cartoon">Мультяшный</option>
+                            <option value="watercolor">Акварель</option>
+                            <option value="pixel">Пиксель-арт</option>
+                            <option value="abstract">Абстрактный</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- Stats -->
+            <div class="w-full max-w-2xl bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Статистика генераций</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-3xl font-bold text-blue-600" id="totalGenerations">0</div>
+                        <div class="text-sm text-blue-800">Всего создано</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-3xl font-bold text-purple-600" id="uniqueAnimals">0</div>
+                        <div class="text-sm text-purple-800">Уникальных</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-3xl font-bold text-green-600" id="mammalsCount">0</div>
+                        <div class="text-sm text-green-800">Млекопитающих</div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <div class="text-3xl font-bold text-yellow-600" id="birdsCount">0</div>
+                        <div class="text-sm text-yellow-800">Птиц</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ Замените на ваш Access Key от Unsplash API
+        const ACCESS_KEY = "weWni75rK-1LtP0rIjiHVQlsZJlBn_5efCRtQysBAgE";
+
+        // Типы животных для запросов к API
+        const animalTypes = {
+            mammal: ["lion", "elephant", "giraffe", "tiger", "bear", "wolf"],
+            bird: ["eagle", "parrot", "flamingo", "owl", "peacock"],
+            reptile: ["snake", "lizard", "turtle", "crocodile", "chameleon"],
+            aquatic: ["dolphin", "whale", "jellyfish", "shark", "octopus"],
+            insect: ["butterfly", "dragonfly", "beetle", "ant", "bee"]
+        };
+
+        // Редкие животные (для режима "Сюрприз")
+        const rareQueries = [
+            "white tiger",
+            "okapi",
+            "komodo dragon",
+            "axolotl",
+            "shoebill stork"
+        ];
+
+        // Статистика
+        let totalGenerations = 0;
+        let uniqueAnimalsShown = new Set();
+        let mammalsCount = 0;
+        let birdsCount = 0;
+
+        // DOM элементы
+        const generateBtn = document.getElementById('generateBtn');
+        const surpriseBtn = document.getElementById('surpriseBtn');
+        const loadingState = document.getElementById('loadingState');
+        const animalImageContainer = document.getElementById('animalImageContainer');
+        const animalImage = document.getElementById('animalImage');
+        const animalName = document.getElementById('animalName');
+        const animalDescription = document.getElementById('animalDescription');
+        const animalType = document.getElementById('animalType');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const animalCategory = document.getElementById('animalCategory');
+        const artStyle = document.getElementById('artStyle');
+
+        const totalGenerationsEl = document.getElementById('totalGenerations');
+        const uniqueAnimalsEl = document.getElementById('uniqueAnimals');
+        const mammalsCountEl = document.getElementById('mammalsCount');
+        const birdsCountEl = document.getElementById('birdsCount');
+
+        // Получить случайное изображение через Unsplash API
+        async function fetchUnsplashImage(query) {
+            const url = `https://api.unsplash.com/photos/random?query= ${encodeURIComponent(query)}&client_id=${ACCESS_KEY}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Ошибка загрузки изображения");
+                const data = await response.json();
+                return data.urls.regular || data.urls.small;
+            } catch (error) {
+                console.error("Unsplash API error:", error);
+                return null;
+            }
+        }
+
+        // Основная функция генерации
+        async function generateAnimal() {
+            loadingState.classList.remove('hidden');
+            animalImageContainer.classList.add('hidden', 'ai-processing');
+
+            const selectedCategory = animalCategory.value;
+            const selectedStyle = artStyle.value;
+
+            let queryList = [];
+            if (selectedCategory === "random") {
+                queryList = Object.values(animalTypes).flat();
+            } else {
+                queryList = animalTypes[selectedCategory];
+            }
+
+            if (!queryList.length) {
+                alert("Нет данных для выбранной категории.");
+                loadingState.classList.add('hidden');
+                return;
+            }
+
+            const randomQueryIndex = Math.floor(Math.random() * queryList.length);
+            const query = `${queryList[randomQueryIndex]} ${selectedStyle !== 'realistic' ? selectedStyle : ''}`;
+
+            const imageUrl = await fetchUnsplashImage(query);
+
+            if (!imageUrl) {
+                animalImage.src = "https://via.placeholder.com/800x600.png?text=Image+Not+Found ";
+                animalName.textContent = "Ошибка загрузки";
+                animalDescription.textContent = "Не удалось загрузить изображение с Unsplash.";
+            } else {
+                animalImage.src = imageUrl;
+                animalName.textContent = `Создано AI: ${query}`;
+                animalDescription.textContent = `Изображение сгенерировано через Unsplash API`;
+            }
+
+            updateStats(selectedCategory);
+            showResult();
+        }
+
+        // Режим "Сюрприз"
+        async function generateSurprise() {
+            loadingState.innerHTML = `
+                <div class="p-12 text-center">
+                    <div class="flex justify-center mb-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center pulse-animation">
+                            <i class="fas fa-star text-white text-2xl"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Ищем что-то особенное...</h3>
+                    <p class="text-gray-500">Активирован режим "Сюрприз" - ожидайте редкое животное!</p>
+                </div>
+            `;
+            loadingState.classList.remove('hidden');
+            animalImageContainer.classList.add('hidden', 'ai-processing');
+
+            const randomIndex = Math.floor(Math.random() * rareQueries.length);
+            const query = `${rareQueries[randomIndex]} rare wildlife`;
+
+            const imageUrl = await fetchUnsplashImage(query);
+
+            if (!imageUrl) {
+                animalImage.src = "https://via.placeholder.com/800x600.png?text=Rare+Image+Not+Found ";
+                animalName.textContent = "✨ Неизвестное существо";
+                animalDescription.textContent = "Не удалось найти редкое животное.";
+            } else {
+                animalImage.src = imageUrl;
+                animalName.textContent = `✨ Найдено: ${rareQueries[randomIndex]} ✨`;
+                animalDescription.textContent = `Редкий вид, найденный в дикой природе.`;
+            }
+
+            updateStats("mammal"); // Примерно считаем как млекопитающее
+            showResult(true);
+        }
+
+        // Отображение результата
+        function showResult(surprise = false) {
+            loadingState.classList.add('hidden');
+            animalImageContainer.classList.remove('hidden');
+            animalImageContainer.classList.add('animate__animated', surprise ? 'animate__pulse' : 'animate__fadeIn');
+            setTimeout(() => {
+                animalImageContainer.classList.remove('animate__animated', 'animate__pulse', 'animate__fadeIn');
+            }, 1000);
+        }
+
+        // Обновление статистики
+        function updateStats(category) {
+            totalGenerations++;
+            if (category === "mammal") mammalsCount++;
+            if (category === "bird") birdsCount++;
+
+            totalGenerationsEl.textContent = totalGenerations;
+            uniqueAnimalsEl.textContent = uniqueAnimalsShown.size;
+            mammalsCountEl.textContent = mammalsCount;
+            birdsCountEl.textContent = birdsCount;
+        }
+
+        // Скачивание изображения
+        function downloadImage() {
+            if (!animalImage.src) return;
+            const link = document.createElement('a');
+            link.href = animalImage.src;
+            link.download = `ai_animal_${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Tooltip for download button
+        downloadBtn.addEventListener('mouseenter', () => {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'absolute bg-gray-800 text-white text-xs px-2 py-1 rounded-md -mt-8';
+            tooltip.textContent = 'Скачать изображение';
+            downloadBtn.appendChild(tooltip);
+            setTimeout(() => {
+                downloadBtn.removeChild(tooltip);
+            }, 2000);
+        });
+
+        // Event listeners
+        generateBtn.addEventListener('click', generateAnimal);
+        surpriseBtn.addEventListener('click', generateSurprise);
+        downloadBtn.addEventListener('click', downloadImage);
+    </script>
+</body>
+</html>
